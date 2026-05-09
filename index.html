@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI 痕迹检查器</title>
+<title>AI Trace Checker | AI 痕迹检查器</title>
 <style>
   :root {
     --bg: #0f1117;
@@ -22,303 +22,165 @@
   }
   * { margin:0; padding:0; box-sizing:border-box; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans JP', 'Noto Sans KR', sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
   }
   .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+
+  /* Header */
+  .header { display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:6px; position:relative; }
   h1 {
-    font-size: 28px;
-    font-weight: 700;
-    text-align: center;
-    margin-bottom: 6px;
+    font-size: 28px; font-weight: 700;
     background: linear-gradient(135deg, var(--accent), #a78bfa);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   }
+  .lang-switcher {
+    position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .lang-switcher .globe { font-size: 16px; color: var(--text2); }
+  .lang-select {
+    background: var(--surface2); color: var(--text); border: 1px solid var(--border);
+    border-radius: 6px; padding: 5px 10px; font-size: 13px; cursor: pointer; outline: none;
+    appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239499b3'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 8px center; padding-right: 24px;
+  }
+  .lang-select:hover { border-color: var(--accent); }
   .subtitle { text-align:center; color:var(--text2); font-size:14px; margin-bottom:28px; }
 
   /* Input area */
   .input-area {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 20px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px; margin-bottom: 20px;
   }
   .input-area label { font-size: 13px; color: var(--text2); display: block; margin-bottom: 8px; }
   textarea {
-    width: 100%;
-    min-height: 220px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    font-size: 14px;
-    line-height: 1.7;
-    padding: 14px;
-    resize: vertical;
-    outline: none;
+    width: 100%; min-height: 220px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 8px; color: var(--text);
+    font-size: 14px; line-height: 1.7; padding: 14px; resize: vertical; outline: none;
     transition: border-color .2s;
   }
   textarea:focus { border-color: var(--accent); }
   textarea::placeholder { color: #555a70; }
-
   .actions { display:flex; gap:12px; margin-top:14px; align-items:center; flex-wrap:wrap; }
   .btn {
-    padding: 10px 28px;
-    border: none;
-    border-radius: 8px;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all .2s;
+    padding: 10px 28px; border: none; border-radius: 8px;
+    font-size: 15px; font-weight: 600; cursor: pointer; transition: all .2s;
   }
-  .btn-primary {
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    color: #fff;
-  }
+  .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
   .btn-primary:hover { opacity: .9; transform: translateY(-1px); }
-  .btn-secondary {
-    background: var(--surface2);
-    color: var(--text2);
-    border: 1px solid var(--border);
-  }
+  .btn-secondary { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
   .btn-secondary:hover { border-color: var(--accent); color: var(--text); }
   .word-count { margin-left: auto; font-size: 13px; color: var(--text2); }
 
   /* Score card */
-  .score-card {
-    display: none;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 24px;
-    margin-bottom: 20px;
-    text-align: center;
-  }
+  .score-card { display:none; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:24px; margin-bottom:20px; text-align:center; }
   .score-card.show { display: block; }
-  .score-ring {
-    width: 140px; height: 140px;
-    margin: 0 auto 16px;
-    position: relative;
-  }
+  .score-ring { width:140px; height:140px; margin:0 auto 16px; position:relative; }
   .score-ring svg { transform: rotate(-90deg); }
-  .score-ring .score-value {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 36px;
-    font-weight: 700;
-  }
-  .score-ring .score-label {
-    position: absolute;
-    top: calc(50% + 22px); left: 50%;
-    transform: translateX(-50%);
-    font-size: 11px;
-    color: var(--text2);
-  }
-  .level-badge {
-    display: inline-block;
-    padding: 6px 18px;
-    border-radius: 20px;
-    font-size: 14px;
-    font-weight: 600;
-    margin-bottom: 8px;
-  }
-  .level-badge.极高 { background: rgba(255,92,92,.15); color: var(--red); }
-  .level-badge.高 { background: rgba(255,159,67,.15); color: var(--orange); }
-  .level-badge.中等 { background: rgba(255,217,61,.15); color: var(--yellow); }
-  .level-badge.较低 { background: rgba(74,222,128,.15); color: var(--green); }
-  .level-badge.极低 { background: rgba(74,222,128,.15); color: var(--green); }
+  .score-ring .score-value { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:36px; font-weight:700; }
+  .score-ring .score-label { position:absolute; top:calc(50% + 22px); left:50%; transform:translateX(-50%); font-size:11px; color:var(--text2); }
+  .level-badge { display:inline-block; padding:6px 18px; border-radius:20px; font-size:14px; font-weight:600; margin-bottom:8px; }
+  .level-badge.lv-critical { background: rgba(255,92,92,.15); color: var(--red); }
+  .level-badge.lv-high { background: rgba(255,159,67,.15); color: var(--orange); }
+  .level-badge.lv-medium { background: rgba(255,217,61,.15); color: var(--yellow); }
+  .level-badge.lv-low { background: rgba(74,222,128,.15); color: var(--green); }
+  .level-badge.lv-minimal { background: rgba(74,222,128,.15); color: var(--green); }
   .score-desc { font-size: 13px; color: var(--text2); margin-top: 4px; }
-
-  /* Stats row */
-  .stats-row {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    margin-top: 20px;
-    text-align: center;
-  }
-  .stat-box {
-    background: var(--surface2);
-    border-radius: 8px;
-    padding: 14px 8px;
-  }
-  .stat-box .stat-num { font-size: 24px; font-weight: 700; }
-  .stat-box .stat-name { font-size: 12px; color: var(--text2); margin-top: 4px; }
+  .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:20px; text-align:center; }
+  .stat-box { background:var(--surface2); border-radius:8px; padding:14px 8px; }
+  .stat-box .stat-num { font-size:24px; font-weight:700; }
+  .stat-box .stat-name { font-size:12px; color:var(--text2); margin-top:4px; }
 
   /* Findings */
-  .findings { display: none; }
+  .findings { display:none; }
   .findings.show { display: block; }
-  .finding-group {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    margin-bottom: 14px;
-    overflow: hidden;
-  }
-  .finding-group-header {
-    display: flex;
-    align-items: center;
-    padding: 14px 18px;
-    cursor: pointer;
-    user-select: none;
-    gap: 10px;
-    transition: background .15s;
-  }
+  .finding-group { background:var(--surface); border:1px solid var(--border); border-radius:12px; margin-bottom:14px; overflow:hidden; }
+  .finding-group-header { display:flex; align-items:center; padding:14px 18px; cursor:pointer; user-select:none; gap:10px; transition:background .15s; }
   .finding-group-header:hover { background: var(--surface2); }
   .finding-group-header .icon { font-size: 18px; }
-  .finding-group-header .title { font-weight: 600; font-size: 15px; flex: 1; }
-  .finding-group-header .badge {
-    font-size: 12px;
-    padding: 2px 10px;
-    border-radius: 10px;
-    background: var(--surface2);
-    color: var(--text2);
-  }
-  .finding-group-header .arrow {
-    color: var(--text2);
-    transition: transform .2s;
-    font-size: 12px;
-  }
+  .finding-group-header .title { font-weight:600; font-size:15px; flex:1; }
+  .finding-group-header .badge { font-size:12px; padding:2px 10px; border-radius:10px; background:var(--surface2); color:var(--text2); }
+  .finding-group-header .arrow { color:var(--text2); transition:transform .2s; font-size:12px; }
   .finding-group.open .arrow { transform: rotate(90deg); }
-  .finding-group-body {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height .3s ease;
-  }
+  .finding-group-body { max-height:0; overflow:hidden; transition:max-height .3s ease; }
   .finding-group.open .finding-group-body { max-height: 2000px; }
-  .finding-item {
-    display: flex;
-    align-items: flex-start;
-    padding: 10px 18px 10px 46px;
-    border-top: 1px solid var(--border);
-    font-size: 13px;
-    line-height: 1.6;
-    gap: 8px;
-  }
-  .finding-item .dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    margin-top: 6px;
-    flex-shrink: 0;
-  }
+  .finding-item { display:flex; align-items:flex-start; padding:10px 18px 10px 46px; border-top:1px solid var(--border); font-size:13px; line-height:1.6; gap:8px; }
+  .finding-item .dot { width:8px; height:8px; border-radius:50%; margin-top:6px; flex-shrink:0; }
   .dot.high { background: var(--red); }
   .dot.medium { background: var(--orange); }
   .dot.low { background: var(--green); }
   .dot.info { background: var(--blue); }
   .finding-item .text { flex:1; }
-  .finding-item .score-tag {
-    font-size: 11px;
-    padding: 1px 7px;
-    border-radius: 4px;
-    background: var(--surface2);
-    color: var(--text2);
-    white-space: nowrap;
-    flex-shrink: 0;
-    margin-top: 2px;
-  }
+  .finding-item .score-tag { font-size:11px; padding:1px 7px; border-radius:4px; background:var(--surface2); color:var(--text2); white-space:nowrap; flex-shrink:0; margin-top:2px; }
 
-  /* Highlighted text preview */
-  .highlight-section {
-    display: none;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 14px;
-  }
+  .highlight-section { display:none; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:14px; }
   .highlight-section.show { display: block; }
   .highlight-section h3 { font-size: 15px; margin-bottom: 12px; }
-  .highlighted-text {
-    font-size: 13px;
-    line-height: 2;
-    color: var(--text2);
-    white-space: pre-wrap;
-    word-break: break-word;
-    max-height: 400px;
-    overflow-y: auto;
-    padding: 12px;
-    background: var(--surface2);
-    border-radius: 8px;
-  }
-  .highlighted-text mark {
-    background: rgba(255,92,92,.25);
-    color: var(--red);
-    border-radius: 2px;
-    padding: 0 2px;
-    cursor: help;
-  }
-  .highlighted-text mark.med {
-    background: rgba(255,159,67,.2);
-    color: var(--orange);
-  }
-  .highlighted-text mark.low {
-    background: rgba(255,217,61,.15);
-    color: var(--yellow);
-  }
+  .highlighted-text { font-size:13px; line-height:2; color:var(--text2); white-space:pre-wrap; word-break:break-word; max-height:400px; overflow-y:auto; padding:12px; background:var(--surface2); border-radius:8px; }
+  .highlighted-text mark { background:rgba(255,92,92,.25); color:var(--red); border-radius:2px; padding:0 2px; cursor:help; }
+  .highlighted-text mark.med { background:rgba(255,159,67,.2); color:var(--orange); }
+  .highlighted-text mark.low { background:rgba(255,217,61,.15); color:var(--yellow); }
 
-  /* Suggestions */
-  .suggestions {
-    display: none;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 14px;
-  }
+  .suggestions { display:none; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:14px; }
   .suggestions.show { display: block; }
   .suggestions h3 { font-size: 15px; margin-bottom: 12px; }
-  .sug-item {
-    display: flex;
-    gap: 10px;
-    padding: 8px 0;
-    font-size: 13px;
-    line-height: 1.6;
-    color: var(--text2);
-  }
-  .sug-item .num {
-    color: var(--accent);
-    font-weight: 600;
-    flex-shrink: 0;
-  }
+  .sug-item { display:flex; gap:10px; padding:8px 0; font-size:13px; line-height:1.6; color:var(--text2); }
+  .sug-item .num { color:var(--accent); font-weight:600; flex-shrink:0; }
 
   @media (max-width: 640px) {
     .container { padding: 16px 12px; }
     .stats-row { grid-template-columns: repeat(2, 1fr); }
-    h1 { font-size: 22px; }
+    h1 { font-size: 20px; }
     textarea { min-height: 160px; }
+    .lang-switcher { position: static; transform: none; margin-top: 8px; }
+    .header { flex-wrap: wrap; justify-content: center; }
   }
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>📝 AI 痕迹检查器</h1>
-  <p class="subtitle">检测文本中的 AI 生成痕迹 — 词汇 · 句式 · 结构 · 重复性</p>
+  <div class="header">
+    <h1 id="title">📝 AI 痕迹检查器</h1>
+    <div class="lang-switcher">
+      <span class="globe">🌐</span>
+      <select class="lang-select" id="langSelect" onchange="switchLang(this.value)">
+        <option value="zh">中文</option>
+        <option value="en">English</option>
+        <option value="ja">日本語</option>
+        <option value="ko">한국어</option>
+        <option value="zh-tw">繁體中文</option>
+        <option value="fr">Français</option>
+        <option value="de">Deutsch</option>
+        <option value="es">Español</option>
+      </select>
+    </div>
+  </div>
+  <p class="subtitle" id="subtitle">检测文本中的 AI 生成痕迹 — 词汇 · 句式 · 结构 · 重复性</p>
 
   <div class="input-area">
-    <label>粘贴或输入待检测的文本内容（支持 Markdown）</label>
+    <label id="inputLabel">粘贴或输入待检测的文本内容（支持 Markdown）</label>
     <textarea id="inputText" placeholder="将文章内容粘贴到这里..."></textarea>
     <div class="actions">
-      <button class="btn btn-primary" onclick="runCheck()">🔍 开始检测</button>
-      <button class="btn btn-secondary" onclick="loadSample()">📄 加载示例</button>
-      <button class="btn btn-secondary" onclick="clearAll()">清空</button>
+      <button class="btn btn-primary" id="btnCheck" onclick="runCheck()">🔍 开始检测</button>
+      <button class="btn btn-secondary" id="btnSample" onclick="loadSample()">📄 加载示例</button>
+      <button class="btn btn-secondary" id="btnClear" onclick="clearAll()">清空</button>
       <span class="word-count" id="wordCount">0 词</span>
     </div>
   </div>
 
   <div class="score-card" id="scoreCard">
-    <div class="score-ring" id="scoreRing">
+    <div class="score-ring">
       <svg width="140" height="140">
         <circle cx="70" cy="70" r="58" fill="none" stroke="#2e3348" stroke-width="10"/>
         <circle id="scoreArc" cx="70" cy="70" r="58" fill="none" stroke="var(--green)" stroke-width="10"
           stroke-dasharray="364.4" stroke-dashoffset="364.4" stroke-linecap="round"/>
       </svg>
       <span class="score-value" id="scoreValue">0</span>
-      <span class="score-label">每100词</span>
+      <span class="score-label" id="scorePer100">每100词</span>
     </div>
     <span class="level-badge" id="levelBadge"></span>
     <p class="score-desc" id="scoreDesc"></p>
@@ -326,20 +188,464 @@
   </div>
 
   <div class="highlight-section" id="highlightSection">
-    <h3>🖍️ 标注预览 — AI 痕迹词汇高亮</h3>
+    <h3 id="highlightTitle">🖍️ 标注预览 — AI 痕迹词汇高亮</h3>
     <div class="highlighted-text" id="highlightedText"></div>
   </div>
 
   <div class="findings" id="findings"></div>
 
   <div class="suggestions" id="suggestions">
-    <h3>💡 降低 AI 痕迹的建议</h3>
+    <h3 id="sugTitle">💡 降低 AI 痕迹的建议</h3>
     <div id="sugList"></div>
   </div>
 </div>
 
 <script>
-// ========== Data ==========
+// ========================================================
+// i18n — All UI strings
+// ========================================================
+const I18N = {
+  zh: {
+    title: '📝 AI 痕迹检查器',
+    subtitle: '检测文本中的 AI 生成痕迹 — 词汇 · 句式 · 结构 · 重复性',
+    inputLabel: '粘贴或输入待检测的文本内容（支持 Markdown）',
+    placeholder: '将文章内容粘贴到这里...',
+    btnCheck: '🔍 开始检测',
+    btnSample: '📄 加载示例',
+    btnClear: '清空',
+    wordUnit: '词',
+    per100: '每100词',
+    alertEmpty: '请先输入文本内容',
+    alertShort: '文本太短，至少需要 20 个词',
+    levels: {
+      critical: { text: '极高', desc: '几乎确定为 AI 生成内容' },
+      high:     { text: '高',   desc: '大量 AI 痕迹，很可能是 AI 生成或 AI 辅助' },
+      medium:   { text: '中等', desc: '存在一定 AI 痕迹，可能经过 AI 辅助写作' },
+      low:      { text: '较低', desc: '少量 AI 特征词汇，可能是人工写作' },
+      minimal:  { text: '极低', desc: '未发现明显 AI 痕迹' },
+    },
+    cats: { vocab: '词汇', pattern: '句式', struct: '结构', repeat: '重复' },
+    catScore: '得分',
+    catCheck: '检查',
+    highlightTitle: '🖍️ 标注预览 — AI 痕迹词汇高亮',
+    sugTitle: '💡 降低 AI 痕迹的建议',
+    riskHigh: '高危', riskMed: '中危', riskLow: '低危',
+    levelHigh: '🔴 高', levelMed: '🟡 中', levelLow: '🟢 低',
+    noTrace: '当前文本未发现明显 AI 痕迹，无需特别调整。',
+    sug: {
+      vocab1: '替换 AI 高频词汇: crucial→important, leverage→use, seamless→smooth, comprehensive→full/complete',
+      vocab2: '减少副词堆砌: 删除不必要的 significantly, essentially, effectively',
+      pattern1: '改变句式开头: 避免 "Whether you\'re...", "Here\'s the thing", "That\'s where X comes in"',
+      pattern2: '减少双破折号插入语 (—...—)，改用逗号或拆分为独立句',
+      struct1: '打破模板化结构: 合并小节, 减少标题层级, 不必每段都配列表',
+      struct2: '删除 Quick Summary 框和标准 FAQ 部分, 或改用更自然的问答方式',
+      repeat1: '变化段落长度: 混合使用长短段, 避免每段字数相近',
+      repeat2: '减少加粗标记, 只对真正关键的词汇加粗',
+    },
+    // Analysis descriptions
+    desc: {
+      h2: (n) => `H2 标题 ${n} 个，AI 倾向过度分节`,
+      h3: (n) => `H3 标题 ${n} 个，层级过多`,
+      listRatio: (p) => `列表项占比 ${p}%，AI 偏好大量列表`,
+      numbered: (n) => `编号式标题 ${n} 个，AI 常用编号列举`,
+      faq: 'FAQ 部分，AI 标准模板',
+      table: (n) => `Markdown 表格 ${n} 行`,
+      summary: 'Quick Summary/Key Takeaways 引用框',
+      cta: (n) => `${n} 个引用块 CTA 链接`,
+      paraCV: (v) => `段落长度变异系数 ${v}，AI 段落趋于等长`,
+      bold: (n) => `加粗标记 ${n} 处，AI 过度使用加粗`,
+      emDash: (n) => `长破折号 (—) ${n} 次，AI 偏好 em dash`,
+      colonList: (n) => `冒号引导列表 ${n} 次`,
+      buzzHeading: (n) => `AI 模板标题 ${n} 个`,
+      sentStart: (k, v) => `句首 "${k}..." 重复 ${v} 次`,
+    },
+  },
+  en: {
+    title: '📝 AI Trace Checker',
+    subtitle: 'Detect AI-generated traces in text — Vocabulary · Patterns · Structure · Repetition',
+    inputLabel: 'Paste or type text to analyze (Markdown supported)',
+    placeholder: 'Paste your article here...',
+    btnCheck: '🔍 Analyze',
+    btnSample: '📄 Load Sample',
+    btnClear: 'Clear',
+    wordUnit: 'words',
+    per100: 'per 100 words',
+    alertEmpty: 'Please enter text first',
+    alertShort: 'Text too short, at least 20 words required',
+    levels: {
+      critical: { text: 'Critical', desc: 'Almost certainly AI-generated content' },
+      high:     { text: 'High',     desc: 'Heavy AI traces, likely AI-generated or AI-assisted' },
+      medium:   { text: 'Medium',   desc: 'Some AI traces detected, possibly AI-assisted writing' },
+      low:      { text: 'Low',      desc: 'Few AI-characteristic words, likely human-written' },
+      minimal:  { text: 'Minimal',  desc: 'No obvious AI traces found' },
+    },
+    cats: { vocab: 'Vocabulary', pattern: 'Patterns', struct: 'Structure', repeat: 'Repetition' },
+    catScore: 'Score',
+    catCheck: 'Check',
+    highlightTitle: '🖍️ Highlight Preview — AI Trace Words',
+    sugTitle: '💡 Suggestions to Reduce AI Traces',
+    riskHigh: 'High risk', riskMed: 'Medium risk', riskLow: 'Low risk',
+    levelHigh: '🔴 High', levelMed: '🟡 Med', levelLow: '🟢 Low',
+    noTrace: 'No obvious AI traces found. No adjustments needed.',
+    sug: {
+      vocab1: 'Replace AI buzzwords: crucial→important, leverage→use, seamless→smooth, comprehensive→full/complete',
+      vocab2: 'Reduce adverb stacking: remove unnecessary significantly, essentially, effectively',
+      pattern1: 'Vary sentence openers: avoid "Whether you\'re...", "Here\'s the thing", "That\'s where X comes in"',
+      pattern2: 'Reduce em-dash parentheticals (—...—), use commas or split into separate sentences',
+      struct1: 'Break template structure: merge sections, reduce heading levels, avoid listing everything',
+      struct2: 'Remove Quick Summary boxes and standard FAQ sections, or use a more natural Q&A style',
+      repeat1: 'Vary paragraph length: mix long and short paragraphs',
+      repeat2: 'Reduce bold markup, only bold truly key terms',
+    },
+    desc: {
+      h2: (n) => `${n} H2 headings — AI tends to over-section`,
+      h3: (n) => `${n} H3 headings — too many levels`,
+      listRatio: (p) => `List items ${p}% of content — AI prefers heavy listing`,
+      numbered: (n) => `${n} numbered headings — typical AI enumeration`,
+      faq: 'FAQ section — standard AI template',
+      table: (n) => `Markdown table with ${n} rows`,
+      summary: 'Quick Summary/Key Takeaways callout box',
+      cta: (n) => `${n} blockquote CTA links`,
+      paraCV: (v) => `Paragraph length CV ${v} — AI paragraphs tend to be uniform`,
+      bold: (n) => `${n} bold markups — AI overuses bold`,
+      emDash: (n) => `Em dash (—) used ${n} times — AI preference`,
+      colonList: (n) => `Colon-to-list pattern ${n} times`,
+      buzzHeading: (n) => `${n} AI template headings`,
+      sentStart: (k, v) => `Sentence start "${k}..." repeated ${v} times`,
+    },
+  },
+  ja: {
+    title: '📝 AI 痕跡チェッカー',
+    subtitle: 'テキスト中の AI 生成痕跡を検出 — 語彙 · 文型 · 構造 · 反復性',
+    inputLabel: '分析するテキストを貼り付けまたは入力（Markdown 対応）',
+    placeholder: '記事の内容をここに貼り付けてください...',
+    btnCheck: '🔍 分析開始',
+    btnSample: '📄 サンプル読込',
+    btnClear: 'クリア',
+    wordUnit: '語',
+    per100: '100語あたり',
+    alertEmpty: 'テキストを入力してください',
+    alertShort: 'テキストが短すぎます。20語以上必要です',
+    levels: {
+      critical: { text: '極めて高い', desc: 'ほぼ確実に AI 生成コンテンツ' },
+      high:     { text: '高い',       desc: 'AI 痕跡が多数、AI 生成または AI 補助の可能性が高い' },
+      medium:   { text: '中程度',     desc: 'ある程度の AI 痕跡あり、AI 補助ライティングの可能性' },
+      low:      { text: '低い',       desc: 'AI 特徴語彙が少数、人間による執筆の可能性' },
+      minimal:  { text: '極めて低い', desc: '明らかな AI 痕跡は検出されませんでした' },
+    },
+    cats: { vocab: '語彙', pattern: '文型', struct: '構造', repeat: '反復' },
+    catScore: 'スコア',
+    catCheck: 'チェック',
+    highlightTitle: '🖍️ ハイライトプレビュー — AI 痕跡語彙',
+    sugTitle: '💡 AI 痕跡を減らす提案',
+    riskHigh: '高リスク', riskMed: '中リスク', riskLow: '低リスク',
+    levelHigh: '🔴 高', levelMed: '🟡 中', levelLow: '🟢 低',
+    noTrace: '明らかな AI 痕跡は検出されませんでした。調整は不要です。',
+    sug: {
+      vocab1: 'AI 高頻度語彙を置換: crucial→important, leverage→use, seamless→smooth',
+      vocab2: '副詞の積み重ねを減らす: 不要な significantly, essentially, effectively を削除',
+      pattern1: '文頭パターンを変える: "Whether you\'re...", "Here\'s the thing" を避ける',
+      pattern2: 'ダッシュ挿入語 (—...—) を減らし、カンマや独立文に変更',
+      struct1: 'テンプレート構造を崩す: セクション統合、見出しレベル削減',
+      struct2: 'Quick Summary や FAQ セクションを削除、より自然な Q&A 形式に',
+      repeat1: '段落の長さを変える: 長短を混ぜて均一さを避ける',
+      repeat2: '太字マークを減らし、本当に重要な語のみ太字に',
+    },
+    desc: {
+      h2: (n) => `H2 見出し ${n} 個 — AI は過度に分節する傾向`,
+      h3: (n) => `H3 見出し ${n} 個 — 階層が多すぎる`,
+      listRatio: (p) => `リスト項目が ${p}% — AI はリストを多用`,
+      numbered: (n) => `番号付き見出し ${n} 個 — AI の典型的な列挙`,
+      faq: 'FAQ セクション — AI 標準テンプレート',
+      table: (n) => `Markdown テーブル ${n} 行`,
+      summary: 'Quick Summary/Key Takeaways ボックス',
+      cta: (n) => `${n} 個の引用ブロック CTA リンク`,
+      paraCV: (v) => `段落長の変動係数 ${v} — AI 段落は均一になりがち`,
+      bold: (n) => `太字マーク ${n} 箇所 — AI は太字を多用`,
+      emDash: (n) => `ダッシュ (—) ${n} 回使用 — AI の好み`,
+      colonList: (n) => `コロン→リストパターン ${n} 回`,
+      buzzHeading: (n) => `AI テンプレート見出し ${n} 個`,
+      sentStart: (k, v) => `文頭 "${k}..." が ${v} 回反復`,
+    },
+  },
+  ko: {
+    title: '📝 AI 흔적 검사기',
+    subtitle: '텍스트에서 AI 생성 흔적 감지 — 어휘 · 문형 · 구조 · 반복성',
+    inputLabel: '분석할 텍스트를 붙여넣거나 입력하세요 (Markdown 지원)',
+    placeholder: '기사 내용을 여기에 붙여넣으세요...',
+    btnCheck: '🔍 분석 시작',
+    btnSample: '📄 샘플 불러오기',
+    btnClear: '지우기',
+    wordUnit: '단어',
+    per100: '100단어 당',
+    alertEmpty: '먼저 텍스트를 입력하세요',
+    alertShort: '텍스트가 너무 짧습니다. 최소 20단어 이상 필요합니다',
+    levels: {
+      critical: { text: '매우 높음', desc: 'AI가 생성한 콘텐츠로 거의 확실' },
+      high:     { text: '높음',     desc: 'AI 흔적이 많음, AI 생성 또는 AI 보조 가능성 높음' },
+      medium:   { text: '보통',     desc: '일부 AI 흔적 감지, AI 보조 작성 가능성' },
+      low:      { text: '낮음',     desc: 'AI 특징 어휘가 적음, 사람이 쓴 것으로 보임' },
+      minimal:  { text: '매우 낮음', desc: '명확한 AI 흔적이 감지되지 않음' },
+    },
+    cats: { vocab: '어휘', pattern: '문형', struct: '구조', repeat: '반복' },
+    catScore: '점수',
+    catCheck: '검사',
+    highlightTitle: '🖍️ 하이라이트 미리보기 — AI 흔적 어휘',
+    sugTitle: '💡 AI 흔적을 줄이기 위한 제안',
+    riskHigh: '고위험', riskMed: '중위험', riskLow: '저위험',
+    levelHigh: '🔴 높음', levelMed: '🟡 중간', levelLow: '🟢 낮음',
+    noTrace: '명확한 AI 흔적이 발견되지 않았습니다. 조정이 필요 없습니다.',
+    sug: {
+      vocab1: 'AI 고빈도 어휘 교체: crucial→important, leverage→use, seamless→smooth',
+      vocab2: '부사 남용 줄이기: 불필요한 significantly, essentially, effectively 삭제',
+      pattern1: '문장 시작 패턴 변경: "Whether you\'re...", "Here\'s the thing" 등 피하기',
+      pattern2: '대시 삽입어 (—...—) 줄이기, 쉼표나 독립 문장으로 변경',
+      struct1: '템플릿 구조 탈피: 섹션 통합, 제목 수준 축소',
+      struct2: 'Quick Summary 및 FAQ 섹션 삭제 또는 자연스러운 Q&A 형식으로 변경',
+      repeat1: '단락 길이 변화: 길고 짧은 단락을 혼합',
+      repeat2: '굵은 글씨 줄이기, 정말 중요한 용어만 굵게 표시',
+    },
+    desc: {
+      h2: (n) => `H2 제목 ${n}개 — AI는 과도하게 분절하는 경향`,
+      h3: (n) => `H3 제목 ${n}개 — 계층이 너무 많음`,
+      listRatio: (p) => `목록 항목 비율 ${p}% — AI는 목록을 남용`,
+      numbered: (n) => `번호 매김 제목 ${n}개 — AI의 전형적인 나열`,
+      faq: 'FAQ 섹션 — AI 표준 템플릿',
+      table: (n) => `Markdown 테이블 ${n}행`,
+      summary: 'Quick Summary/Key Takeaways 박스',
+      cta: (n) => `${n}개의 인용 블록 CTA 링크`,
+      paraCV: (v) => `단락 길이 변동계수 ${v} — AI 단락은 균일한 경향`,
+      bold: (n) => `굵은 표시 ${n}곳 — AI는 굵게를 남용`,
+      emDash: (n) => `대시 (—) ${n}회 사용 — AI 선호`,
+      colonList: (n) => `콜론→목록 패턴 ${n}회`,
+      buzzHeading: (n) => `AI 템플릿 제목 ${n}개`,
+      sentStart: (k, v) => `문장 시작 "${k}..." ${v}회 반복`,
+    },
+  },
+  'zh-tw': {
+    title: '📝 AI 痕跡檢查器',
+    subtitle: '偵測文本中的 AI 生成痕跡 — 詞彙 · 句式 · 結構 · 重複性',
+    inputLabel: '貼上或輸入待偵測的文字內容（支援 Markdown）',
+    placeholder: '將文章內容貼到這裡...',
+    btnCheck: '🔍 開始偵測',
+    btnSample: '📄 載入範例',
+    btnClear: '清除',
+    wordUnit: '詞',
+    per100: '每100詞',
+    alertEmpty: '請先輸入文字內容',
+    alertShort: '文字太短，至少需要 20 個詞',
+    levels: {
+      critical: { text: '極高', desc: '幾乎確定為 AI 生成內容' },
+      high:     { text: '高',   desc: '大量 AI 痕跡，很可能是 AI 生成或 AI 輔助' },
+      medium:   { text: '中等', desc: '存在一定 AI 痕跡，可能經過 AI 輔助寫作' },
+      low:      { text: '較低', desc: '少量 AI 特徵詞彙，可能是人工寫作' },
+      minimal:  { text: '極低', desc: '未發現明顯 AI 痕跡' },
+    },
+    cats: { vocab: '詞彙', pattern: '句式', struct: '結構', repeat: '重複' },
+    catScore: '得分',
+    catCheck: '檢查',
+    highlightTitle: '🖍️ 標註預覽 — AI 痕跡詞彙高亮',
+    sugTitle: '💡 降低 AI 痕跡的建議',
+    riskHigh: '高危', riskMed: '中危', riskLow: '低危',
+    levelHigh: '🔴 高', levelMed: '🟡 中', levelLow: '🟢 低',
+    noTrace: '目前文字未發現明顯 AI 痕跡，無需特別調整。',
+    sug: {
+      vocab1: '替換 AI 高頻詞彙: crucial→important, leverage→use, seamless→smooth',
+      vocab2: '減少副詞堆砌: 刪除不必要的 significantly, essentially, effectively',
+      pattern1: '改變句式開頭: 避免 "Whether you\'re...", "Here\'s the thing"',
+      pattern2: '減少雙破折號插入語 (—...—)，改用逗號或拆分為獨立句',
+      struct1: '打破模板化結構: 合併小節, 減少標題層級',
+      struct2: '刪除 Quick Summary 框和標準 FAQ 部分',
+      repeat1: '變化段落長度: 混合使用長短段',
+      repeat2: '減少粗體標記, 只對真正關鍵的詞彙加粗',
+    },
+    desc: {
+      h2: (n) => `H2 標題 ${n} 個，AI 傾向過度分節`,
+      h3: (n) => `H3 標題 ${n} 個，層級過多`,
+      listRatio: (p) => `列表項佔比 ${p}%，AI 偏好大量列表`,
+      numbered: (n) => `編號式標題 ${n} 個，AI 常用編號列舉`,
+      faq: 'FAQ 部分，AI 標準模板',
+      table: (n) => `Markdown 表格 ${n} 行`,
+      summary: 'Quick Summary/Key Takeaways 引用框',
+      cta: (n) => `${n} 個引用區塊 CTA 連結`,
+      paraCV: (v) => `段落長度變異係數 ${v}，AI 段落趨於等長`,
+      bold: (n) => `粗體標記 ${n} 處，AI 過度使用粗體`,
+      emDash: (n) => `長破折號 (—) ${n} 次，AI 偏好 em dash`,
+      colonList: (n) => `冒號引導列表 ${n} 次`,
+      buzzHeading: (n) => `AI 模板標題 ${n} 個`,
+      sentStart: (k, v) => `句首 "${k}..." 重複 ${v} 次`,
+    },
+  },
+  fr: {
+    title: '📝 Détecteur de traces IA',
+    subtitle: 'Détecter les traces de génération IA — Vocabulaire · Modèles · Structure · Répétition',
+    inputLabel: 'Collez ou saisissez le texte à analyser (Markdown pris en charge)',
+    placeholder: 'Collez votre article ici...',
+    btnCheck: '🔍 Analyser',
+    btnSample: '📄 Charger un exemple',
+    btnClear: 'Effacer',
+    wordUnit: 'mots',
+    per100: 'pour 100 mots',
+    alertEmpty: 'Veuillez d\'abord saisir du texte',
+    alertShort: 'Texte trop court, minimum 20 mots requis',
+    levels: {
+      critical: { text: 'Critique',  desc: 'Contenu presque certainement généré par IA' },
+      high:     { text: 'Élevé',     desc: 'Nombreuses traces IA, probablement généré ou assisté par IA' },
+      medium:   { text: 'Moyen',     desc: 'Quelques traces IA détectées, possiblement assisté par IA' },
+      low:      { text: 'Faible',    desc: 'Peu de mots caractéristiques IA, probablement rédigé par un humain' },
+      minimal:  { text: 'Minimal',   desc: 'Aucune trace IA évidente trouvée' },
+    },
+    cats: { vocab: 'Vocabulaire', pattern: 'Modèles', struct: 'Structure', repeat: 'Répétition' },
+    catScore: 'Score',
+    catCheck: 'Vérif.',
+    highlightTitle: '🖍️ Aperçu surligné — Mots à traces IA',
+    sugTitle: '💡 Suggestions pour réduire les traces IA',
+    riskHigh: 'Risque élevé', riskMed: 'Risque moyen', riskLow: 'Risque faible',
+    levelHigh: '🔴 Élevé', levelMed: '🟡 Moyen', levelLow: '🟢 Faible',
+    noTrace: 'Aucune trace IA évidente trouvée. Aucun ajustement nécessaire.',
+    sug: {
+      vocab1: 'Remplacer les mots-clés IA : crucial→important, leverage→use, seamless→smooth',
+      vocab2: 'Réduire l\'accumulation d\'adverbes : supprimer significantly, essentially, effectively',
+      pattern1: 'Varier les débuts de phrases : éviter "Whether you\'re...", "Here\'s the thing"',
+      pattern2: 'Réduire les incises en tiret cadratin (—...—)',
+      struct1: 'Briser la structure modèle : fusionner les sections, réduire les niveaux de titres',
+      struct2: 'Supprimer les encadrés Quick Summary et les FAQ standards',
+      repeat1: 'Varier la longueur des paragraphes : mélanger long et court',
+      repeat2: 'Réduire le gras, ne mettre en gras que les termes essentiels',
+    },
+    desc: {
+      h2: (n) => `${n} titres H2 — IA tend à sur-sectionner`,
+      h3: (n) => `${n} titres H3 — trop de niveaux`,
+      listRatio: (p) => `Éléments de liste ${p}% — IA préfère lister abondamment`,
+      numbered: (n) => `${n} titres numérotés — énumération typique IA`,
+      faq: 'Section FAQ — modèle standard IA',
+      table: (n) => `Tableau Markdown de ${n} lignes`,
+      summary: 'Encadré Quick Summary/Key Takeaways',
+      cta: (n) => `${n} liens CTA en citation`,
+      paraCV: (v) => `CV longueur paragraphes ${v} — paragraphes IA tendent à être uniformes`,
+      bold: (n) => `${n} marquages gras — IA abuse du gras`,
+      emDash: (n) => `Tiret cadratin (—) ${n} fois — préférence IA`,
+      colonList: (n) => `Modèle deux-points→liste ${n} fois`,
+      buzzHeading: (n) => `${n} titres modèles IA`,
+      sentStart: (k, v) => `Début de phrase "${k}..." répété ${v} fois`,
+    },
+  },
+  de: {
+    title: '📝 KI-Spuren-Prüfer',
+    subtitle: 'KI-generierte Spuren im Text erkennen — Wortschatz · Muster · Struktur · Wiederholung',
+    inputLabel: 'Text zum Analysieren einfügen oder eingeben (Markdown unterstützt)',
+    placeholder: 'Artikel hier einfügen...',
+    btnCheck: '🔍 Analysieren',
+    btnSample: '📄 Beispiel laden',
+    btnClear: 'Löschen',
+    wordUnit: 'Wörter',
+    per100: 'pro 100 Wörter',
+    alertEmpty: 'Bitte zuerst Text eingeben',
+    alertShort: 'Text zu kurz, mindestens 20 Wörter erforderlich',
+    levels: {
+      critical: { text: 'Kritisch',  desc: 'Fast sicher KI-generierter Inhalt' },
+      high:     { text: 'Hoch',      desc: 'Viele KI-Spuren, wahrscheinlich KI-generiert oder -unterstützt' },
+      medium:   { text: 'Mittel',    desc: 'Einige KI-Spuren erkannt, möglicherweise KI-unterstützt' },
+      low:      { text: 'Niedrig',   desc: 'Wenige KI-typische Wörter, wahrscheinlich menschlich verfasst' },
+      minimal:  { text: 'Minimal',   desc: 'Keine offensichtlichen KI-Spuren gefunden' },
+    },
+    cats: { vocab: 'Wortschatz', pattern: 'Muster', struct: 'Struktur', repeat: 'Wiederholung' },
+    catScore: 'Punkte',
+    catCheck: 'Prüfung',
+    highlightTitle: '🖍️ Hervorhebungsvorschau — KI-Spuren-Wörter',
+    sugTitle: '💡 Vorschläge zur Reduzierung von KI-Spuren',
+    riskHigh: 'Hohes Risiko', riskMed: 'Mittleres Risiko', riskLow: 'Niedriges Risiko',
+    levelHigh: '🔴 Hoch', levelMed: '🟡 Mittel', levelLow: '🟢 Niedrig',
+    noTrace: 'Keine offensichtlichen KI-Spuren gefunden. Keine Anpassung nötig.',
+    sug: {
+      vocab1: 'KI-Buzzwords ersetzen: crucial→important, leverage→use, seamless→smooth',
+      vocab2: 'Adverb-Häufung reduzieren: überflüssige significantly, essentially, effectively entfernen',
+      pattern1: 'Satzanfänge variieren: "Whether you\'re...", "Here\'s the thing" vermeiden',
+      pattern2: 'Gedankenstriche (—...—) reduzieren, Kommas oder separate Sätze verwenden',
+      struct1: 'Vorlagenstruktur aufbrechen: Abschnitte zusammenfassen, Überschriftenebenen reduzieren',
+      struct2: 'Quick Summary und standard FAQ-Abschnitte entfernen',
+      repeat1: 'Absatzlänge variieren: kurze und lange Absätze mischen',
+      repeat2: 'Fettschrift reduzieren, nur wirklich wichtige Begriffe fett markieren',
+    },
+    desc: {
+      h2: (n) => `${n} H2-Überschriften — KI neigt zu Über-Gliederung`,
+      h3: (n) => `${n} H3-Überschriften — zu viele Ebenen`,
+      listRatio: (p) => `Listenelemente ${p}% — KI bevorzugt umfangreiche Listen`,
+      numbered: (n) => `${n} nummerierte Überschriften — typische KI-Aufzählung`,
+      faq: 'FAQ-Abschnitt — KI-Standardvorlage',
+      table: (n) => `Markdown-Tabelle mit ${n} Zeilen`,
+      summary: 'Quick Summary/Key Takeaways Box',
+      cta: (n) => `${n} Zitat-Block CTA-Links`,
+      paraCV: (v) => `Absatzlängen-Variationskoeffizient ${v} — KI-Absätze tendieren zur Gleichmäßigkeit`,
+      bold: (n) => `${n} Fettmarkierungen — KI übernutzt Fettschrift`,
+      emDash: (n) => `Gedankenstrich (—) ${n} Mal — KI-Präferenz`,
+      colonList: (n) => `Doppelpunkt→Liste-Muster ${n} Mal`,
+      buzzHeading: (n) => `${n} KI-Vorlagen-Überschriften`,
+      sentStart: (k, v) => `Satzanfang "${k}..." ${v} Mal wiederholt`,
+    },
+  },
+  es: {
+    title: '📝 Detector de Huellas IA',
+    subtitle: 'Detectar rastros de generación IA — Vocabulario · Patrones · Estructura · Repetición',
+    inputLabel: 'Pega o escribe el texto a analizar (Markdown compatible)',
+    placeholder: 'Pega tu artículo aquí...',
+    btnCheck: '🔍 Analizar',
+    btnSample: '📄 Cargar ejemplo',
+    btnClear: 'Limpiar',
+    wordUnit: 'palabras',
+    per100: 'por 100 palabras',
+    alertEmpty: 'Por favor, ingresa texto primero',
+    alertShort: 'Texto demasiado corto, se requieren al menos 20 palabras',
+    levels: {
+      critical: { text: 'Crítico',  desc: 'Contenido casi con certeza generado por IA' },
+      high:     { text: 'Alto',     desc: 'Muchas huellas IA, probablemente generado o asistido por IA' },
+      medium:   { text: 'Medio',    desc: 'Algunas huellas IA detectadas, posiblemente asistido por IA' },
+      low:      { text: 'Bajo',     desc: 'Pocas palabras características de IA, probablemente escrito por humano' },
+      minimal:  { text: 'Mínimo',   desc: 'No se encontraron huellas IA obvias' },
+    },
+    cats: { vocab: 'Vocabulario', pattern: 'Patrones', struct: 'Estructura', repeat: 'Repetición' },
+    catScore: 'Puntos',
+    catCheck: 'Verificación',
+    highlightTitle: '🖍️ Vista previa resaltada — Palabras con huellas IA',
+    sugTitle: '💡 Sugerencias para reducir huellas IA',
+    riskHigh: 'Alto riesgo', riskMed: 'Riesgo medio', riskLow: 'Bajo riesgo',
+    levelHigh: '🔴 Alto', levelMed: '🟡 Medio', levelLow: '🟢 Bajo',
+    noTrace: 'No se encontraron huellas IA obvias. No se necesitan ajustes.',
+    sug: {
+      vocab1: 'Reemplazar palabras IA: crucial→important, leverage→use, seamless→smooth',
+      vocab2: 'Reducir acumulación de adverbios: eliminar significantly, essentially, effectively innecesarios',
+      pattern1: 'Variar inicios de oraciones: evitar "Whether you\'re...", "Here\'s the thing"',
+      pattern2: 'Reducir paréntesis con guiones (—...—), usar comas o dividir en oraciones',
+      struct1: 'Romper estructura de plantilla: fusionar secciones, reducir niveles de títulos',
+      struct2: 'Eliminar Quick Summary y secciones FAQ estándar',
+      repeat1: 'Variar longitud de párrafos: mezclar párrafos largos y cortos',
+      repeat2: 'Reducir negritas, solo resaltar términos realmente clave',
+    },
+    desc: {
+      h2: (n) => `${n} títulos H2 — IA tiende a sobre-seccionar`,
+      h3: (n) => `${n} títulos H3 — demasiados niveles`,
+      listRatio: (p) => `Elementos de lista ${p}% — IA prefiere listar mucho`,
+      numbered: (n) => `${n} títulos numerados — enumeración típica de IA`,
+      faq: 'Sección FAQ — plantilla estándar IA',
+      table: (n) => `Tabla Markdown con ${n} filas`,
+      summary: 'Cuadro Quick Summary/Key Takeaways',
+      cta: (n) => `${n} enlaces CTA en citas`,
+      paraCV: (v) => `CV longitud párrafos ${v} — párrafos IA tienden a ser uniformes`,
+      bold: (n) => `${n} marcas en negrita — IA abusa de negritas`,
+      emDash: (n) => `Guion largo (—) ${n} veces — preferencia IA`,
+      colonList: (n) => `Patrón dos puntos→lista ${n} veces`,
+      buzzHeading: (n) => `${n} títulos plantilla IA`,
+      sentStart: (k, v) => `Inicio de oración "${k}..." repetido ${v} veces`,
+    },
+  },
+};
+
+let curLang = 'zh';
+function t() { return I18N[curLang]; }
+
+// ========================================================
+// Detection data (unchanged)
+// ========================================================
 const AI_WORDS = {
   high: [
     "delve","delving","tapestry","leverage","leveraging","leveraged",
@@ -397,37 +703,40 @@ const AI_WORDS = {
 };
 
 const AI_PATTERNS = [
-  [/whether you'?re .+? or .+?,/gi, "Whether you're X or Y 句式", 3],
-  [/in today'?s .+? world/gi, "In today's X world 句式", 3],
-  [/in the ever-evolving .+?\b/gi, "In the ever-evolving X 句式", 3],
-  [/here'?s the (?:thing|deal|problem|catch)/gi, "Here's the thing 口语化开头", 2],
-  [/that'?s where .+? comes? in/gi, "That's where X comes in 句式", 2],
-  [/let'?s (?:dive|delve|explore|take a look)/gi, "Let's dive/explore 开头", 2],
-  [/(?:but |and )?here'?s (?:the |a )?(?:key|catch|twist|kicker)/gi, "Here's the key/catch 句式", 2],
-  [/not just about .+? — it/gi, "Not just about X — it 句式", 2],
-  [/isn'?t just about .+? —/gi, "Isn't just about X — 句式", 2],
-  [/(?:the )?(?:good news|bad news|best part) is/gi, "The good/bad news is 句式", 2],
-  [/gives? you the best of both worlds/gi, "Best of both worlds 套话", 2],
-  [/(?:quick|brief|short) summary/gi, "Quick Summary 标签", 1],
-  [/step[- ]by[- ]step/gi, "Step by step 套话", 1],
-  [/in (?:this|our) (?:guide|article|post|tutorial)/gi, "In this guide/article 自引用", 1],
-  [/we'?ll (?:explain|explore|walk you through|cover|discuss|show)/gi, "We'll explain/explore 句式", 1],
-  [/ready to .+?\?/gi, "Ready to X? CTA 句式", 2],
-  [/(?:hours|days|years) of (?:time )?saved/gi, "时间节约套话", 1],
-  [/— .+? — /g, "双破折号插入语", 1],
+  [/whether you'?re .+? or .+?,/gi, "Whether you're X or Y", 3],
+  [/in today'?s .+? world/gi, "In today's X world", 3],
+  [/in the ever-evolving .+?\b/gi, "In the ever-evolving X", 3],
+  [/here'?s the (?:thing|deal|problem|catch)/gi, "Here's the thing/deal", 2],
+  [/that'?s where .+? comes? in/gi, "That's where X comes in", 2],
+  [/let'?s (?:dive|delve|explore|take a look)/gi, "Let's dive/explore", 2],
+  [/(?:but |and )?here'?s (?:the |a )?(?:key|catch|twist|kicker)/gi, "Here's the key/catch", 2],
+  [/not just about .+? — it/gi, "Not just about X — it", 2],
+  [/isn'?t just about .+? —/gi, "Isn't just about X —", 2],
+  [/(?:the )?(?:good news|bad news|best part) is/gi, "The good/bad news is", 2],
+  [/gives? you the best of both worlds/gi, "Best of both worlds", 2],
+  [/(?:quick|brief|short) summary/gi, "Quick Summary", 1],
+  [/step[- ]by[- ]step/gi, "Step by step", 1],
+  [/in (?:this|our) (?:guide|article|post|tutorial)/gi, "In this guide/article", 1],
+  [/we'?ll (?:explain|explore|walk you through|cover|discuss|show)/gi, "We'll explain/explore", 1],
+  [/ready to .+?\?/gi, "Ready to X? CTA", 2],
+  [/(?:hours|days|years) of (?:time )?saved/gi, "X of time saved", 1],
+  [/— .+? — /g, "Em-dash parenthetical", 1],
 ];
 
 const WEIGHT = { high: 3, medium: 2, low: 1 };
 
-// ========== Analysis ==========
+// ========================================================
+// Analysis
+// ========================================================
 function analyze(text) {
   const lines = text.split('\n');
-  const findings = []; // {cat, desc, weight, level}
+  const findings = [];
   let total = 0;
   const textLower = text.toLowerCase();
+  const L = t();
+  const allMatches = [];
 
-  // ---- Vocabulary ----
-  const allMatches = []; // for highlighting
+  // Vocabulary
   for (const [level, phrases] of Object.entries(AI_WORDS)) {
     const w = WEIGHT[level];
     for (const phrase of phrases) {
@@ -436,75 +745,74 @@ function analyze(text) {
       if (m && m.length > 0) {
         const s = w * m.length;
         total += s;
-        const lab = {high:'🔴 高',medium:'🟡 中',low:'🟢 低'}[level];
-        findings.push({cat:'词汇', desc:`${lab} | "${phrase}" × ${m.length}`, weight:w, score:s, level});
+        const lab = {high: L.levelHigh, medium: L.levelMed, low: L.levelLow}[level];
+        findings.push({cat:'vocab', desc:`${lab} | "${phrase}" × ${m.length}`, weight:w, score:s, level});
         allMatches.push({phrase, level, re: new RegExp('\\b' + escapeRegex(phrase) + '\\b', 'gi')});
       }
     }
   }
 
-  // ---- Sentence patterns ----
+  // Patterns
   for (const [re, desc, w] of AI_PATTERNS) {
     const m = text.match(re);
     if (m && m.length > 0) {
       const s = w * m.length;
       total += s;
-      findings.push({cat:'句式', desc:`"${desc}" × ${m.length}`, weight:w, score:s, level: w>=3?'high':w>=2?'medium':'low'});
+      findings.push({cat:'pattern', desc:`"${desc}" × ${m.length}`, weight:w, score:s, level: w>=3?'high':w>=2?'medium':'low'});
     }
   }
 
-  // ---- Structure ----
+  // Structure
+  const D = L.desc;
   const h2 = lines.filter(l => /^##\s/.test(l.trim())).length;
   const h3 = lines.filter(l => /^###\s/.test(l.trim())).length;
-  if (h2 > 8) { total += 2; findings.push({cat:'结构', desc:`H2 标题 ${h2} 个，AI 倾向过度分节`, weight:2, score:2, level:'medium'}); }
-  if (h3 > 15) { total += 2; findings.push({cat:'结构', desc:`H3 标题 ${h3} 个，层级过多`, weight:2, score:2, level:'medium'}); }
+  if (h2 > 8) { total += 2; findings.push({cat:'struct', desc: D.h2(h2), weight:2, score:2, level:'medium'}); }
+  if (h3 > 15) { total += 2; findings.push({cat:'struct', desc: D.h3(h3), weight:2, score:2, level:'medium'}); }
 
   const listItems = lines.filter(l => /^\s*[-*]\s/.test(l) || /^\s*\d+\.\s/.test(l)).length;
   const nonEmpty = lines.filter(l => l.trim()).length;
   if (nonEmpty > 0 && listItems / nonEmpty > 0.3) {
-    total += 2; findings.push({cat:'结构', desc:`列表项占比 ${(listItems/nonEmpty*100).toFixed(0)}%，AI 偏好大量列表`, weight:2, score:2, level:'medium'});
+    total += 2; findings.push({cat:'struct', desc: D.listRatio((listItems/nonEmpty*100).toFixed(0)), weight:2, score:2, level:'medium'});
   }
 
   const numbered = lines.filter(l => /^#{2,4}\s+(?:\d+[.)]\s|Q\d+|Problem \d+|Method \d+|Step \d+|Tip \d+)/i.test(l.trim())).length;
-  if (numbered >= 5) { total += 2; findings.push({cat:'结构', desc:`编号式标题 ${numbered} 个，AI 常用编号列举`, weight:2, score:2, level:'medium'}); }
+  if (numbered >= 5) { total += 2; findings.push({cat:'struct', desc: D.numbered(numbered), weight:2, score:2, level:'medium'}); }
 
-  if (/##\s*FAQ/i.test(text)) { total += 1; findings.push({cat:'结构', desc:'包含 FAQ 部分，AI 标准模板', weight:1, score:1, level:'low'}); }
+  if (/##\s*FAQ/i.test(text)) { total += 1; findings.push({cat:'struct', desc: D.faq, weight:1, score:1, level:'low'}); }
 
   const tableRows = lines.filter(l => l.trim().startsWith('|')).length;
-  if (tableRows > 3) { total += 1; findings.push({cat:'结构', desc:`Markdown 表格 ${tableRows} 行`, weight:1, score:1, level:'low'}); }
+  if (tableRows > 3) { total += 1; findings.push({cat:'struct', desc: D.table(tableRows), weight:1, score:1, level:'low'}); }
 
   if (/>\s*\*\*(?:Quick Summary|Key Takeaways|TL;DR)/i.test(text)) {
-    total += 2; findings.push({cat:'结构', desc:'Quick Summary/Key Takeaways 引用框', weight:2, score:2, level:'medium'});
+    total += 2; findings.push({cat:'struct', desc: D.summary, weight:2, score:2, level:'medium'});
   }
 
   const cta = (text.match(/>\s*\[.+?\]\(.+?\)/g) || []).length;
-  if (cta >= 2) { total += 1; findings.push({cat:'结构', desc:`${cta} 个引用块 CTA 链接`, weight:1, score:1, level:'low'}); }
+  if (cta >= 2) { total += 1; findings.push({cat:'struct', desc: D.cta(cta), weight:1, score:1, level:'low'}); }
 
-  // Paragraph length uniformity
   const paras = text.split(/\n\s*\n/).map(p => p.split(/\s+/).length).filter(n => n > 20);
   if (paras.length >= 5) {
     const avg = paras.reduce((a,b)=>a+b,0)/paras.length;
     const variance = paras.reduce((a,b)=>a+(b-avg)**2,0)/paras.length;
     const cv = Math.sqrt(variance)/avg;
     if (cv < 0.35) {
-      total += 2; findings.push({cat:'结构', desc:`段落长度变异系数 ${cv.toFixed(2)}，AI 段落趋于等长`, weight:2, score:2, level:'medium'});
+      total += 2; findings.push({cat:'struct', desc: D.paraCV(cv.toFixed(2)), weight:2, score:2, level:'medium'});
     }
   }
 
-  // ---- Repetition ----
+  // Repetition
   const bolds = (text.match(/\*\*(.+?)\*\*/g) || []).length;
-  if (bolds > 20) { total += 2; findings.push({cat:'重复', desc:`加粗标记 ${bolds} 处，AI 过度使用加粗`, weight:2, score:2, level:'medium'}); }
+  if (bolds > 20) { total += 2; findings.push({cat:'repeat', desc: D.bold(bolds), weight:2, score:2, level:'medium'}); }
 
   const emDash = (text.match(/—/g) || []).length;
-  if (emDash > 15) { total += 2; findings.push({cat:'重复', desc:`长破折号 (—) ${emDash} 次，AI 偏好 em dash`, weight:2, score:2, level:'medium'}); }
+  if (emDash > 15) { total += 2; findings.push({cat:'repeat', desc: D.emDash(emDash), weight:2, score:2, level:'medium'}); }
 
   const colonList = (text.match(/:\s*\n\s*[-*]/g) || []).length;
-  if (colonList > 5) { total += 1; findings.push({cat:'重复', desc:`冒号引导列表 ${colonList} 次`, weight:1, score:1, level:'low'}); }
+  if (colonList > 5) { total += 1; findings.push({cat:'repeat', desc: D.colonList(colonList), weight:1, score:1, level:'low'}); }
 
   const buzzHeadings = (text.match(/#{2,4}\s*.*(Key Features|Key Benefits|Use Cases|Best Practices|Common (?:Issues|Problems)|Conclusion|Introduction)/gi) || []).length;
-  if (buzzHeadings >= 3) { total += 2; findings.push({cat:'重复', desc:`AI 模板标题 ${buzzHeadings} 个`, weight:2, score:2, level:'medium'}); }
+  if (buzzHeadings >= 3) { total += 2; findings.push({cat:'repeat', desc: D.buzzHeading(buzzHeadings), weight:2, score:2, level:'medium'}); }
 
-  // sentence start repetition
   const sentences = text.split(/[.!?]\s+/);
   const starts = {};
   for (const s of sentences) {
@@ -517,28 +825,51 @@ function analyze(text) {
   for (const [k, v] of Object.entries(starts)) {
     if (v >= 3) {
       total += 1;
-      findings.push({cat:'重复', desc:`句首 "${k}..." 重复 ${v} 次`, weight:1, score:1, level:'low'});
+      findings.push({cat:'repeat', desc: D.sentStart(k, v), weight:1, score:1, level:'low'});
     }
   }
 
   return { total, findings, allMatches };
 }
 
-function escapeRegex(s) {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
+function escapeRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+function escapeHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-// ========== UI ==========
+// ========================================================
+// UI
+// ========================================================
 const $ = id => document.getElementById(id);
 
-$('inputText').addEventListener('input', () => {
+function switchLang(lang) {
+  curLang = lang;
+  const L = t();
+  $('title').textContent = L.title;
+  document.title = L.title.replace('📝 ', '');
+  $('subtitle').textContent = L.subtitle;
+  $('inputLabel').textContent = L.inputLabel;
+  $('inputText').placeholder = L.placeholder;
+  $('btnCheck').textContent = L.btnCheck;
+  $('btnSample').textContent = L.btnSample;
+  $('btnClear').textContent = L.btnClear;
+  $('scorePer100').textContent = L.per100;
+  $('highlightTitle').textContent = L.highlightTitle;
+  $('sugTitle').textContent = L.sugTitle;
+  // Update word count
+  updateWordCount();
+  // Re-run if results are visible
+  if ($('scoreCard').classList.contains('show')) runCheck();
+}
+
+function updateWordCount() {
   const wc = $('inputText').value.trim().split(/\s+/).filter(Boolean).length;
-  $('wordCount').textContent = wc + ' 词';
-});
+  $('wordCount').textContent = wc + ' ' + t().wordUnit;
+}
+
+$('inputText').addEventListener('input', updateWordCount);
 
 function clearAll() {
   $('inputText').value = '';
-  $('wordCount').textContent = '0 词';
+  updateWordCount();
   $('scoreCard').classList.remove('show');
   $('findings').classList.remove('show');
   $('highlightSection').classList.remove('show');
@@ -546,22 +877,22 @@ function clearAll() {
 }
 
 function runCheck() {
+  const L = t();
   const text = $('inputText').value.trim();
-  if (!text) return alert('请先输入文本内容');
+  if (!text) return alert(L.alertEmpty);
 
   const wordCount = text.split(/\s+/).filter(Boolean).length;
-  if (wordCount < 20) return alert('文本太短，至少需要 20 个词');
+  if (wordCount < 20) return alert(L.alertShort);
 
   const { total, findings, allMatches } = analyze(text);
   const norm = total / (wordCount / 100);
 
-  // Score ring
-  let color, levelText, desc;
-  if (norm >= 8) { color = 'var(--red)'; levelText = '极高'; desc = '几乎确定为 AI 生成内容'; }
-  else if (norm >= 5) { color = 'var(--orange)'; levelText = '高'; desc = '大量 AI 痕迹，很可能是 AI 生成或 AI 辅助'; }
-  else if (norm >= 3) { color = 'var(--yellow)'; levelText = '中等'; desc = '存在一定 AI 痕迹，可能经过 AI 辅助写作'; }
-  else if (norm >= 1.5) { color = 'var(--green)'; levelText = '较低'; desc = '少量 AI 特征词汇，可能是人工写作'; }
-  else { color = 'var(--green)'; levelText = '极低'; desc = '未发现明显 AI 痕迹'; }
+  let color, levelKey;
+  if (norm >= 8) { color = 'var(--red)'; levelKey = 'critical'; }
+  else if (norm >= 5) { color = 'var(--orange)'; levelKey = 'high'; }
+  else if (norm >= 3) { color = 'var(--yellow)'; levelKey = 'medium'; }
+  else if (norm >= 1.5) { color = 'var(--green)'; levelKey = 'low'; }
+  else { color = 'var(--green)'; levelKey = 'minimal'; }
 
   const arc = $('scoreArc');
   const circ = 2 * Math.PI * 58;
@@ -569,52 +900,48 @@ function runCheck() {
   arc.style.strokeDasharray = circ;
   arc.style.strokeDashoffset = circ * (1 - pct);
   arc.style.stroke = color;
-
   $('scoreValue').textContent = norm.toFixed(1);
   $('scoreValue').style.color = color;
 
   const badge = $('levelBadge');
-  badge.textContent = levelText;
-  badge.className = 'level-badge ' + levelText;
-  $('scoreDesc').textContent = desc;
+  badge.textContent = L.levels[levelKey].text;
+  badge.className = 'level-badge lv-' + levelKey;
+  $('scoreDesc').textContent = L.levels[levelKey].desc;
 
   // Stats
+  const catKeys = ['vocab','pattern','struct','repeat'];
+  const catNames = L.cats;
+  const icons = { vocab:'📖', pattern:'✍️', struct:'🏗️', repeat:'🔁' };
   const cats = {};
   for (const f of findings) cats[f.cat] = (cats[f.cat] || 0) + f.score;
-  $('statsRow').innerHTML = [
-    { name: '词汇', val: cats['词汇']||0, icon: '📖' },
-    { name: '句式', val: cats['句式']||0, icon: '✍️' },
-    { name: '结构', val: cats['结构']||0, icon: '🏗️' },
-    { name: '重复', val: cats['重复']||0, icon: '🔁' },
-  ].map(s => `<div class="stat-box"><div class="stat-num">${s.icon} ${s.val}</div><div class="stat-name">${s.name}得分</div></div>`).join('');
-
+  $('statsRow').innerHTML = catKeys.map(k =>
+    `<div class="stat-box"><div class="stat-num">${icons[k]} ${cats[k]||0}</div><div class="stat-name">${catNames[k]}${L.catScore}</div></div>`
+  ).join('');
   $('scoreCard').classList.add('show');
 
-  // Highlighted text
+  // Highlight
   let ht = escapeHtml(text);
-  // Sort by phrase length desc to avoid partial replacements
   const sorted = [...allMatches].sort((a,b) => b.phrase.length - a.phrase.length);
   for (const m of sorted) {
     const cls = m.level === 'high' ? '' : m.level === 'medium' ? ' class="med"' : ' class="low"';
+    const riskLabel = m.level === 'high' ? L.riskHigh : m.level === 'medium' ? L.riskMed : L.riskLow;
     const escapedPhrase = escapeHtml(m.phrase);
     const re = new RegExp('\\b' + escapeRegex(escapedPhrase) + '\\b', 'gi');
-    ht = ht.replace(re, match => `<mark${cls} title="${m.level === 'high' ? '高危' : m.level === 'medium' ? '中危' : '低危'} AI 词汇">${match}</mark>`);
+    ht = ht.replace(re, match => `<mark${cls} title="${riskLabel}">${match}</mark>`);
   }
   $('highlightedText').innerHTML = ht;
   $('highlightSection').classList.add('show');
 
-  // Finding groups
-  const groupOrder = ['词汇','句式','结构','重复'];
-  const icons = { '词汇':'📖', '句式':'✍️', '结构':'🏗️', '重复':'🔁' };
+  // Findings
   let fhtml = '';
-  for (const cat of groupOrder) {
+  for (const cat of catKeys) {
     const items = findings.filter(f => f.cat === cat);
     if (!items.length) continue;
     const catScore = items.reduce((a,b) => a + b.score, 0);
     fhtml += `<div class="finding-group open">
       <div class="finding-group-header" onclick="this.parentElement.classList.toggle('open')">
         <span class="icon">${icons[cat]}</span>
-        <span class="title">${cat}检查</span>
+        <span class="title">${catNames[cat]}${L.catCheck}</span>
         <span class="badge">+${catScore}</span>
         <span class="arrow">▶</span>
       </div>
@@ -633,33 +960,15 @@ function runCheck() {
 
   // Suggestions
   const sugs = [];
-  if (cats['词汇']) {
-    sugs.push('替换 AI 高频词汇: crucial→important, leverage→use, seamless→smooth, comprehensive→full/complete');
-    sugs.push('减少副词堆砌: 删除不必要的 significantly, essentially, effectively');
-  }
-  if (cats['句式']) {
-    sugs.push('改变句式开头: 避免 "Whether you\'re...", "Here\'s the thing", "That\'s where X comes in"');
-    sugs.push('减少双破折号插入语 (—...—)，改用逗号或拆分为独立句');
-  }
-  if (cats['结构']) {
-    sugs.push('打破模板化结构: 合并小节, 减少标题层级, 不必每段都配列表');
-    sugs.push('删除 Quick Summary 框和标准 FAQ 部分, 或改用更自然的问答方式');
-  }
-  if (cats['重复']) {
-    sugs.push('变化段落长度: 混合使用长短段, 避免每段字数相近');
-    sugs.push('减少加粗标记, 只对真正关键的词汇加粗');
-  }
-  if (!sugs.length) sugs.push('当前文本未发现明显 AI 痕迹，无需特别调整。');
-
+  if (cats['vocab']) { sugs.push(L.sug.vocab1); sugs.push(L.sug.vocab2); }
+  if (cats['pattern']) { sugs.push(L.sug.pattern1); sugs.push(L.sug.pattern2); }
+  if (cats['struct']) { sugs.push(L.sug.struct1); sugs.push(L.sug.struct2); }
+  if (cats['repeat']) { sugs.push(L.sug.repeat1); sugs.push(L.sug.repeat2); }
+  if (!sugs.length) sugs.push(L.noTrace);
   $('sugList').innerHTML = sugs.map((s, i) => `<div class="sug-item"><span class="num">${i+1}.</span><span>${s}</span></div>`).join('');
   $('suggestions').classList.add('show');
 
-  // Scroll to result
   $('scoreCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-function escapeHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 function loadSample() {
@@ -684,6 +993,22 @@ Whether you're an individual looking to organize personal archives or an enterpr
 Ready to make your scanned PDFs searchable? Try our free online tools to experience the results firsthand, or contact the team for a customized solution tailored to your project.`;
   $('inputText').dispatchEvent(new Event('input'));
 }
+
+// Auto-detect browser language
+(function() {
+  const bl = (navigator.language || '').toLowerCase();
+  let detected = 'zh';
+  if (bl.startsWith('en')) detected = 'en';
+  else if (bl.startsWith('ja')) detected = 'ja';
+  else if (bl.startsWith('ko')) detected = 'ko';
+  else if (bl === 'zh-tw' || bl === 'zh-hant' || bl === 'zh-hk') detected = 'zh-tw';
+  else if (bl.startsWith('fr')) detected = 'fr';
+  else if (bl.startsWith('de')) detected = 'de';
+  else if (bl.startsWith('es')) detected = 'es';
+  else if (bl.startsWith('zh')) detected = 'zh';
+  $('langSelect').value = detected;
+  switchLang(detected);
+})();
 </script>
 </body>
 </html>
