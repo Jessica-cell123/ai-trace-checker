@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 痕迹检查器</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #242836;
+    --border: #2e3348;
+    --text: #e4e6f0;
+    --text2: #9499b3;
+    --accent: #6c7cff;
+    --accent2: #4b5bdb;
+    --red: #ff5c5c;
+    --orange: #ff9f43;
+    --yellow: #ffd93d;
+    --green: #4ade80;
+    --blue: #60a5fa;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+  h1 {
+    font-size: 28px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 6px;
+    background: linear-gradient(135deg, var(--accent), #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .subtitle { text-align:center; color:var(--text2); font-size:14px; margin-bottom:28px; }
+
+  /* Input area */
+  .input-area {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .input-area label { font-size: 13px; color: var(--text2); display: block; margin-bottom: 8px; }
+  textarea {
+    width: 100%;
+    min-height: 220px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.7;
+    padding: 14px;
+    resize: vertical;
+    outline: none;
+    transition: border-color .2s;
+  }
+  textarea:focus { border-color: var(--accent); }
+  textarea::placeholder { color: #555a70; }
+
+  .actions { display:flex; gap:12px; margin-top:14px; align-items:center; flex-wrap:wrap; }
+  .btn {
+    padding: 10px 28px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+  }
+  .btn-primary:hover { opacity: .9; transform: translateY(-1px); }
+  .btn-secondary {
+    background: var(--surface2);
+    color: var(--text2);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--text); }
+  .word-count { margin-left: auto; font-size: 13px; color: var(--text2); }
+
+  /* Score card */
+  .score-card {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .score-card.show { display: block; }
+  .score-ring {
+    width: 140px; height: 140px;
+    margin: 0 auto 16px;
+    position: relative;
+  }
+  .score-ring svg { transform: rotate(-90deg); }
+  .score-ring .score-value {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 36px;
+    font-weight: 700;
+  }
+  .score-ring .score-label {
+    position: absolute;
+    top: calc(50% + 22px); left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    color: var(--text2);
+  }
+  .level-badge {
+    display: inline-block;
+    padding: 6px 18px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .level-badge.极高 { background: rgba(255,92,92,.15); color: var(--red); }
+  .level-badge.高 { background: rgba(255,159,67,.15); color: var(--orange); }
+  .level-badge.中等 { background: rgba(255,217,61,.15); color: var(--yellow); }
+  .level-badge.较低 { background: rgba(74,222,128,.15); color: var(--green); }
+  .level-badge.极低 { background: rgba(74,222,128,.15); color: var(--green); }
+  .score-desc { font-size: 13px; color: var(--text2); margin-top: 4px; }
+
+  /* Stats row */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 20px;
+    text-align: center;
+  }
+  .stat-box {
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 14px 8px;
+  }
+  .stat-box .stat-num { font-size: 24px; font-weight: 700; }
+  .stat-box .stat-name { font-size: 12px; color: var(--text2); margin-top: 4px; }
+
+  /* Findings */
+  .findings { display: none; }
+  .findings.show { display: block; }
+  .finding-group {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+  .finding-group-header {
+    display: flex;
+    align-items: center;
+    padding: 14px 18px;
+    cursor: pointer;
+    user-select: none;
+    gap: 10px;
+    transition: background .15s;
+  }
+  .finding-group-header:hover { background: var(--surface2); }
+  .finding-group-header .icon { font-size: 18px; }
+  .finding-group-header .title { font-weight: 600; font-size: 15px; flex: 1; }
+  .finding-group-header .badge {
+    font-size: 12px;
+    padding: 2px 10px;
+    border-radius: 10px;
+    background: var(--surface2);
+    color: var(--text2);
+  }
+  .finding-group-header .arrow {
+    color: var(--text2);
+    transition: transform .2s;
+    font-size: 12px;
+  }
+  .finding-group.open .arrow { transform: rotate(90deg); }
+  .finding-group-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height .3s ease;
+  }
+  .finding-group.open .finding-group-body { max-height: 2000px; }
+  .finding-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 10px 18px 10px 46px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    line-height: 1.6;
+    gap: 8px;
+  }
+  .finding-item .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-top: 6px;
+    flex-shrink: 0;
+  }
+  .dot.high { background: var(--red); }
+  .dot.medium { background: var(--orange); }
+  .dot.low { background: var(--green); }
+  .dot.info { background: var(--blue); }
+  .finding-item .text { flex:1; }
+  .finding-item .score-tag {
+    font-size: 11px;
+    padding: 1px 7px;
+    border-radius: 4px;
+    background: var(--surface2);
+    color: var(--text2);
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* Highlighted text preview */
+  .highlight-section {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 14px;
+  }
+  .highlight-section.show { display: block; }
+  .highlight-section h3 { font-size: 15px; margin-bottom: 12px; }
+  .highlighted-text {
+    font-size: 13px;
+    line-height: 2;
+    color: var(--text2);
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 12px;
+    background: var(--surface2);
+    border-radius: 8px;
+  }
+  .highlighted-text mark {
+    background: rgba(255,92,92,.25);
+    color: var(--red);
+    border-radius: 2px;
+    padding: 0 2px;
+    cursor: help;
+  }
+  .highlighted-text mark.med {
+    background: rgba(255,159,67,.2);
+    color: var(--orange);
+  }
+  .highlighted-text mark.low {
+    background: rgba(255,217,61,.15);
+    color: var(--yellow);
+  }
+
+  /* Suggestions */
+  .suggestions {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 14px;
+  }
+  .suggestions.show { display: block; }
+  .suggestions h3 { font-size: 15px; margin-bottom: 12px; }
+  .sug-item {
+    display: flex;
+    gap: 10px;
+    padding: 8px 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text2);
+  }
+  .sug-item .num {
+    color: var(--accent);
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 640px) {
+    .container { padding: 16px 12px; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    h1 { font-size: 22px; }
+    textarea { min-height: 160px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>📝 AI 痕迹检查器</h1>
+  <p class="subtitle">检测文本中的 AI 生成痕迹 — 词汇 · 句式 · 结构 · 重复性</p>
+
+  <div class="input-area">
+    <label>粘贴或输入待检测的文本内容（支持 Markdown）</label>
+    <textarea id="inputText" placeholder="将文章内容粘贴到这里..."></textarea>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="runCheck()">🔍 开始检测</button>
+      <button class="btn btn-secondary" onclick="loadSample()">📄 加载示例</button>
+      <button class="btn btn-secondary" onclick="clearAll()">清空</button>
+      <span class="word-count" id="wordCount">0 词</span>
+    </div>
+  </div>
+
+  <div class="score-card" id="scoreCard">
+    <div class="score-ring" id="scoreRing">
+      <svg width="140" height="140">
+        <circle cx="70" cy="70" r="58" fill="none" stroke="#2e3348" stroke-width="10"/>
+        <circle id="scoreArc" cx="70" cy="70" r="58" fill="none" stroke="var(--green)" stroke-width="10"
+          stroke-dasharray="364.4" stroke-dashoffset="364.4" stroke-linecap="round"/>
+      </svg>
+      <span class="score-value" id="scoreValue">0</span>
+      <span class="score-label">每100词</span>
+    </div>
+    <span class="level-badge" id="levelBadge"></span>
+    <p class="score-desc" id="scoreDesc"></p>
+    <div class="stats-row" id="statsRow"></div>
+  </div>
+
+  <div class="highlight-section" id="highlightSection">
+    <h3>🖍️ 标注预览 — AI 痕迹词汇高亮</h3>
+    <div class="highlighted-text" id="highlightedText"></div>
+  </div>
+
+  <div class="findings" id="findings"></div>
+
+  <div class="suggestions" id="suggestions">
+    <h3>💡 降低 AI 痕迹的建议</h3>
+    <div id="sugList"></div>
+  </div>
+</div>
+
+<script>
+// ========== Data ==========
+const AI_WORDS = {
+  high: [
+    "delve","delving","tapestry","leverage","leveraging","leveraged",
+    "multifaceted","holistic","synergy","paradigm","paradigm shift",
+    "groundbreaking","cutting-edge","game-changer","game-changing",
+    "revolutionize","revolutionizing","spearhead","spearheading",
+    "navigate","navigating","landscape","realm","foster","fostering",
+    "underpins","underpin","underpinning","pivotal","crucial",
+    "indispensable","paramount","embark","embarking",
+    "comprehensive","robust","seamless","seamlessly",
+    "streamline","streamlined","streamlining",
+    "meticulous","meticulously","intricate","intricacies",
+    "nuanced","nuances","elevate","elevating",
+    "empowering","empower","harness","harnessing",
+    "in today's digital age","in today's fast-paced world",
+    "it's worth noting","it is worth noting",
+    "in the ever-evolving","ever-evolving",
+    "let's dive in","let's delve into","without further ado",
+  ],
+  medium: [
+    "utilize","utilizing","utilization","optimal","optimize",
+    "facilitating","facilitate","encompasses","encompassing",
+    "aforementioned","subsequently","furthermore","moreover",
+    "nonetheless","nevertheless","thereby","thereof","wherein",
+    "whilst","amongst","endeavor","endeavors",
+    "bolster","bolstering","augment","augmenting",
+    "aligns with","align with","coupled with",
+    "myriad","plethora","a myriad of","a plethora of",
+    "in essence","in conclusion","to summarize",
+    "it's important to note","it is important to note",
+    "plays a crucial role","plays a pivotal role",
+    "serves as a","stands as a",
+    "the bottom line is","at the end of the day",
+    "in this comprehensive guide",
+    "transformative","actionable","scalable",
+  ],
+  low: [
+    "enhance","enhancing","enhanced","significant","significantly",
+    "essential","essentially","effectively","efficient","efficiently",
+    "specifically","particularly","additionally","consequently",
+    "implement","implementing","implementation",
+    "ensure","ensuring","ensures",
+    "diverse","diversity","dynamic",
+    "innovative","innovation",
+    "integration","integrate","integrating",
+    "fundamental","fundamentally",
+    "critical","notably","primarily",
+    "tailored","bespoke","curated",
+    "ecosystem","framework",
+    "best practices","key takeaways",
+    "in summary","to sum up",
+    "here's the thing","here's the deal",
+    "that said","that being said","with that in mind",
+  ]
+};
+
+const AI_PATTERNS = [
+  [/whether you'?re .+? or .+?,/gi, "Whether you're X or Y 句式", 3],
+  [/in today'?s .+? world/gi, "In today's X world 句式", 3],
+  [/in the ever-evolving .+?\b/gi, "In the ever-evolving X 句式", 3],
+  [/here'?s the (?:thing|deal|problem|catch)/gi, "Here's the thing 口语化开头", 2],
+  [/that'?s where .+? comes? in/gi, "That's where X comes in 句式", 2],
+  [/let'?s (?:dive|delve|explore|take a look)/gi, "Let's dive/explore 开头", 2],
+  [/(?:but |and )?here'?s (?:the |a )?(?:key|catch|twist|kicker)/gi, "Here's the key/catch 句式", 2],
+  [/not just about .+? — it/gi, "Not just about X — it 句式", 2],
+  [/isn'?t just about .+? —/gi, "Isn't just about X — 句式", 2],
+  [/(?:the )?(?:good news|bad news|best part) is/gi, "The good/bad news is 句式", 2],
+  [/gives? you the best of both worlds/gi, "Best of both worlds 套话", 2],
+  [/(?:quick|brief|short) summary/gi, "Quick Summary 标签", 1],
+  [/step[- ]by[- ]step/gi, "Step by step 套话", 1],
+  [/in (?:this|our) (?:guide|article|post|tutorial)/gi, "In this guide/article 自引用", 1],
+  [/we'?ll (?:explain|explore|walk you through|cover|discuss|show)/gi, "We'll explain/explore 句式", 1],
+  [/ready to .+?\?/gi, "Ready to X? CTA 句式", 2],
+  [/(?:hours|days|years) of (?:time )?saved/gi, "时间节约套话", 1],
+  [/— .+? — /g, "双破折号插入语", 1],
+];
+
+const WEIGHT = { high: 3, medium: 2, low: 1 };
+
+// ========== Analysis ==========
+function analyze(text) {
+  const lines = text.split('\n');
+  const findings = []; // {cat, desc, weight, level}
+  let total = 0;
+  const textLower = text.toLowerCase();
+
+  // ---- Vocabulary ----
+  const allMatches = []; // for highlighting
+  for (const [level, phrases] of Object.entries(AI_WORDS)) {
+    const w = WEIGHT[level];
+    for (const phrase of phrases) {
+      const re = new RegExp('\\b' + escapeRegex(phrase) + '\\b', 'gi');
+      const m = textLower.match(re);
+      if (m && m.length > 0) {
+        const s = w * m.length;
+        total += s;
+        const lab = {high:'🔴 高',medium:'🟡 中',low:'🟢 低'}[level];
+        findings.push({cat:'词汇', desc:`${lab} | "${phrase}" × ${m.length}`, weight:w, score:s, level});
+        allMatches.push({phrase, level, re: new RegExp('\\b' + escapeRegex(phrase) + '\\b', 'gi')});
+      }
+    }
+  }
+
+  // ---- Sentence patterns ----
+  for (const [re, desc, w] of AI_PATTERNS) {
+    const m = text.match(re);
+    if (m && m.length > 0) {
+      const s = w * m.length;
+      total += s;
+      findings.push({cat:'句式', desc:`"${desc}" × ${m.length}`, weight:w, score:s, level: w>=3?'high':w>=2?'medium':'low'});
+    }
+  }
+
+  // ---- Structure ----
+  const h2 = lines.filter(l => /^##\s/.test(l.trim())).length;
+  const h3 = lines.filter(l => /^###\s/.test(l.trim())).length;
+  if (h2 > 8) { total += 2; findings.push({cat:'结构', desc:`H2 标题 ${h2} 个，AI 倾向过度分节`, weight:2, score:2, level:'medium'}); }
+  if (h3 > 15) { total += 2; findings.push({cat:'结构', desc:`H3 标题 ${h3} 个，层级过多`, weight:2, score:2, level:'medium'}); }
+
+  const listItems = lines.filter(l => /^\s*[-*]\s/.test(l) || /^\s*\d+\.\s/.test(l)).length;
+  const nonEmpty = lines.filter(l => l.trim()).length;
+  if (nonEmpty > 0 && listItems / nonEmpty > 0.3) {
+    total += 2; findings.push({cat:'结构', desc:`列表项占比 ${(listItems/nonEmpty*100).toFixed(0)}%，AI 偏好大量列表`, weight:2, score:2, level:'medium'});
+  }
+
+  const numbered = lines.filter(l => /^#{2,4}\s+(?:\d+[.)]\s|Q\d+|Problem \d+|Method \d+|Step \d+|Tip \d+)/i.test(l.trim())).length;
+  if (numbered >= 5) { total += 2; findings.push({cat:'结构', desc:`编号式标题 ${numbered} 个，AI 常用编号列举`, weight:2, score:2, level:'medium'}); }
+
+  if (/##\s*FAQ/i.test(text)) { total += 1; findings.push({cat:'结构', desc:'包含 FAQ 部分，AI 标准模板', weight:1, score:1, level:'low'}); }
+
+  const tableRows = lines.filter(l => l.trim().startsWith('|')).length;
+  if (tableRows > 3) { total += 1; findings.push({cat:'结构', desc:`Markdown 表格 ${tableRows} 行`, weight:1, score:1, level:'low'}); }
+
+  if (/>\s*\*\*(?:Quick Summary|Key Takeaways|TL;DR)/i.test(text)) {
+    total += 2; findings.push({cat:'结构', desc:'Quick Summary/Key Takeaways 引用框', weight:2, score:2, level:'medium'});
+  }
+
+  const cta = (text.match(/>\s*\[.+?\]\(.+?\)/g) || []).length;
+  if (cta >= 2) { total += 1; findings.push({cat:'结构', desc:`${cta} 个引用块 CTA 链接`, weight:1, score:1, level:'low'}); }
+
+  // Paragraph length uniformity
+  const paras = text.split(/\n\s*\n/).map(p => p.split(/\s+/).length).filter(n => n > 20);
+  if (paras.length >= 5) {
+    const avg = paras.reduce((a,b)=>a+b,0)/paras.length;
+    const variance = paras.reduce((a,b)=>a+(b-avg)**2,0)/paras.length;
+    const cv = Math.sqrt(variance)/avg;
+    if (cv < 0.35) {
+      total += 2; findings.push({cat:'结构', desc:`段落长度变异系数 ${cv.toFixed(2)}，AI 段落趋于等长`, weight:2, score:2, level:'medium'});
+    }
+  }
+
+  // ---- Repetition ----
+  const bolds = (text.match(/\*\*(.+?)\*\*/g) || []).length;
+  if (bolds > 20) { total += 2; findings.push({cat:'重复', desc:`加粗标记 ${bolds} 处，AI 过度使用加粗`, weight:2, score:2, level:'medium'}); }
+
+  const emDash = (text.match(/—/g) || []).length;
+  if (emDash > 15) { total += 2; findings.push({cat:'重复', desc:`长破折号 (—) ${emDash} 次，AI 偏好 em dash`, weight:2, score:2, level:'medium'}); }
+
+  const colonList = (text.match(/:\s*\n\s*[-*]/g) || []).length;
+  if (colonList > 5) { total += 1; findings.push({cat:'重复', desc:`冒号引导列表 ${colonList} 次`, weight:1, score:1, level:'low'}); }
+
+  const buzzHeadings = (text.match(/#{2,4}\s*.*(Key Features|Key Benefits|Use Cases|Best Practices|Common (?:Issues|Problems)|Conclusion|Introduction)/gi) || []).length;
+  if (buzzHeadings >= 3) { total += 2; findings.push({cat:'重复', desc:`AI 模板标题 ${buzzHeadings} 个`, weight:2, score:2, level:'medium'}); }
+
+  // sentence start repetition
+  const sentences = text.split(/[.!?]\s+/);
+  const starts = {};
+  for (const s of sentences) {
+    const w = s.trim().replace(/^#+\s*/, '').split(/\s+/);
+    if (w.length >= 3) {
+      const k = w.slice(0,3).join(' ').toLowerCase();
+      starts[k] = (starts[k]||0) + 1;
+    }
+  }
+  for (const [k, v] of Object.entries(starts)) {
+    if (v >= 3) {
+      total += 1;
+      findings.push({cat:'重复', desc:`句首 "${k}..." 重复 ${v} 次`, weight:1, score:1, level:'low'});
+    }
+  }
+
+  return { total, findings, allMatches };
+}
+
+function escapeRegex(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// ========== UI ==========
+const $ = id => document.getElementById(id);
+
+$('inputText').addEventListener('input', () => {
+  const wc = $('inputText').value.trim().split(/\s+/).filter(Boolean).length;
+  $('wordCount').textContent = wc + ' 词';
+});
+
+function clearAll() {
+  $('inputText').value = '';
+  $('wordCount').textContent = '0 词';
+  $('scoreCard').classList.remove('show');
+  $('findings').classList.remove('show');
+  $('highlightSection').classList.remove('show');
+  $('suggestions').classList.remove('show');
+}
+
+function runCheck() {
+  const text = $('inputText').value.trim();
+  if (!text) return alert('请先输入文本内容');
+
+  const wordCount = text.split(/\s+/).filter(Boolean).length;
+  if (wordCount < 20) return alert('文本太短，至少需要 20 个词');
+
+  const { total, findings, allMatches } = analyze(text);
+  const norm = total / (wordCount / 100);
+
+  // Score ring
+  let color, levelText, desc;
+  if (norm >= 8) { color = 'var(--red)'; levelText = '极高'; desc = '几乎确定为 AI 生成内容'; }
+  else if (norm >= 5) { color = 'var(--orange)'; levelText = '高'; desc = '大量 AI 痕迹，很可能是 AI 生成或 AI 辅助'; }
+  else if (norm >= 3) { color = 'var(--yellow)'; levelText = '中等'; desc = '存在一定 AI 痕迹，可能经过 AI 辅助写作'; }
+  else if (norm >= 1.5) { color = 'var(--green)'; levelText = '较低'; desc = '少量 AI 特征词汇，可能是人工写作'; }
+  else { color = 'var(--green)'; levelText = '极低'; desc = '未发现明显 AI 痕迹'; }
+
+  const arc = $('scoreArc');
+  const circ = 2 * Math.PI * 58;
+  const pct = Math.min(norm / 10, 1);
+  arc.style.strokeDasharray = circ;
+  arc.style.strokeDashoffset = circ * (1 - pct);
+  arc.style.stroke = color;
+
+  $('scoreValue').textContent = norm.toFixed(1);
+  $('scoreValue').style.color = color;
+
+  const badge = $('levelBadge');
+  badge.textContent = levelText;
+  badge.className = 'level-badge ' + levelText;
+  $('scoreDesc').textContent = desc;
+
+  // Stats
+  const cats = {};
+  for (const f of findings) cats[f.cat] = (cats[f.cat] || 0) + f.score;
+  $('statsRow').innerHTML = [
+    { name: '词汇', val: cats['词汇']||0, icon: '📖' },
+    { name: '句式', val: cats['句式']||0, icon: '✍️' },
+    { name: '结构', val: cats['结构']||0, icon: '🏗️' },
+    { name: '重复', val: cats['重复']||0, icon: '🔁' },
+  ].map(s => `<div class="stat-box"><div class="stat-num">${s.icon} ${s.val}</div><div class="stat-name">${s.name}得分</div></div>`).join('');
+
+  $('scoreCard').classList.add('show');
+
+  // Highlighted text
+  let ht = escapeHtml(text);
+  // Sort by phrase length desc to avoid partial replacements
+  const sorted = [...allMatches].sort((a,b) => b.phrase.length - a.phrase.length);
+  for (const m of sorted) {
+    const cls = m.level === 'high' ? '' : m.level === 'medium' ? ' class="med"' : ' class="low"';
+    const escapedPhrase = escapeHtml(m.phrase);
+    const re = new RegExp('\\b' + escapeRegex(escapedPhrase) + '\\b', 'gi');
+    ht = ht.replace(re, match => `<mark${cls} title="${m.level === 'high' ? '高危' : m.level === 'medium' ? '中危' : '低危'} AI 词汇">${match}</mark>`);
+  }
+  $('highlightedText').innerHTML = ht;
+  $('highlightSection').classList.add('show');
+
+  // Finding groups
+  const groupOrder = ['词汇','句式','结构','重复'];
+  const icons = { '词汇':'📖', '句式':'✍️', '结构':'🏗️', '重复':'🔁' };
+  let fhtml = '';
+  for (const cat of groupOrder) {
+    const items = findings.filter(f => f.cat === cat);
+    if (!items.length) continue;
+    const catScore = items.reduce((a,b) => a + b.score, 0);
+    fhtml += `<div class="finding-group open">
+      <div class="finding-group-header" onclick="this.parentElement.classList.toggle('open')">
+        <span class="icon">${icons[cat]}</span>
+        <span class="title">${cat}检查</span>
+        <span class="badge">+${catScore}</span>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="finding-group-body">
+        ${items.sort((a,b)=>b.score-a.score).map(f => `
+          <div class="finding-item">
+            <span class="dot ${f.level}"></span>
+            <span class="text">${f.desc}</span>
+            <span class="score-tag">+${f.score}</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  }
+  $('findings').innerHTML = fhtml;
+  $('findings').classList.add('show');
+
+  // Suggestions
+  const sugs = [];
+  if (cats['词汇']) {
+    sugs.push('替换 AI 高频词汇: crucial→important, leverage→use, seamless→smooth, comprehensive→full/complete');
+    sugs.push('减少副词堆砌: 删除不必要的 significantly, essentially, effectively');
+  }
+  if (cats['句式']) {
+    sugs.push('改变句式开头: 避免 "Whether you\'re...", "Here\'s the thing", "That\'s where X comes in"');
+    sugs.push('减少双破折号插入语 (—...—)，改用逗号或拆分为独立句');
+  }
+  if (cats['结构']) {
+    sugs.push('打破模板化结构: 合并小节, 减少标题层级, 不必每段都配列表');
+    sugs.push('删除 Quick Summary 框和标准 FAQ 部分, 或改用更自然的问答方式');
+  }
+  if (cats['重复']) {
+    sugs.push('变化段落长度: 混合使用长短段, 避免每段字数相近');
+    sugs.push('减少加粗标记, 只对真正关键的词汇加粗');
+  }
+  if (!sugs.length) sugs.push('当前文本未发现明显 AI 痕迹，无需特别调整。');
+
+  $('sugList').innerHTML = sugs.map((s, i) => `<div class="sug-item"><span class="num">${i+1}.</span><span>${s}</span></div>`).join('');
+  $('suggestions').classList.add('show');
+
+  // Scroll to result
+  $('scoreCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function loadSample() {
+  $('inputText').value = `What Is a Searchable PDF? How to Make Scanned PDFs Searchable
+
+Every day, businesses and individuals scan millions of paper documents into PDFs. But here's the problem — most scanned PDFs are just images. You can't search, copy, or edit the text inside them. That's where searchable PDFs come in.
+
+In this guide, we'll explain what a searchable PDF is, how it differs from a regular scanned PDF, and walk you through different methods to make your scanned documents fully searchable using OCR technology.
+
+A searchable PDF is a PDF document that contains a hidden text layer beneath the visible page image. This text layer allows users to search for specific words or phrases using Ctrl+F (or Cmd+F on Mac), select and copy text, and enable screen readers for accessibility.
+
+In essence, a searchable PDF gives you the best of both worlds: the original visual fidelity of the scanned document plus the functionality of digital, machine-readable text.
+
+Understanding the difference between these two types of PDFs is crucial for effective document management.
+
+Converting scanned PDFs to searchable documents isn't just about convenience — it has significant business and compliance benefits. Instead of manually scrolling through hundreds of pages, you can instantly locate the exact information you need with a simple keyword search. For organizations dealing with large document archives — legal firms, healthcare providers, financial institutions — this translates into hours of time saved daily.
+
+Modern DMS and enterprise content management (ECM) systems rely on text-based indexing to organize and retrieve documents. Searchable PDFs integrate seamlessly into these workflows, enabling automated classification, tagging, and routing.
+
+Whether you're an individual looking to organize personal archives or an enterprise managing millions of documents, making your scanned PDFs searchable is a critical step in any digital transformation strategy.
+
+Ready to make your scanned PDFs searchable? Try our free online tools to experience the results firsthand, or contact the team for a customized solution tailored to your project.`;
+  $('inputText').dispatchEvent(new Event('input'));
+}
+</script>
+</body>
+</html>
